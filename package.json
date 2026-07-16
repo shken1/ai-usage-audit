@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "build": "esbuild analyze.ts --platform=node --format=esm --target=node18 --outfile=dist/analyze.mjs",
+    "prepack": "npm run build",
     "prepublishOnly": "npm run build",
     "start": "node --experimental-strip-types analyze.ts"
   },
