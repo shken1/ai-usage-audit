@@ -1,22 +1,24 @@
 {
   "name": "ai-usage-audit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only CLI that analyzes your local Claude Code transcripts and shows where your tokens go. No network, no dependencies.",
   "type": "module",
   "bin": {
     "ai-usage-audit": "bin/cli.mjs"
   },
   "files": [
-    "analyze.ts",
     "bin/",
+    "dist/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
+    "build": "esbuild analyze.ts --platform=node --format=esm --target=node18 --outfile=dist/analyze.mjs",
+    "prepublishOnly": "npm run build",
     "start": "node --experimental-strip-types analyze.ts"
   },
   "engines": {
-    "node": ">=22.6"
+    "node": ">=18"
   },
   "keywords": [
     "claude-code",
@@ -26,5 +28,8 @@
     "audit"
   ],
   "author": "Artem Horobchenko <artemhorobchenko@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
 }

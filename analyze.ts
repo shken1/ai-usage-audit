@@ -10,7 +10,7 @@
  * messages go to stderr.
  */
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 
 import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs';
 import { createInterface } from 'node:readline';

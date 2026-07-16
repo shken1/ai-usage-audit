@@ -11,25 +11,21 @@ A single-file, read-only CLI that analyzes your local [Claude Code](https://clau
 
 ## Usage
 
-No install needed — clone the repo and run:
+No install needed (Node 18+):
 
 ```sh
-npx tsx analyze.ts --days 14
-```
-
-or, on Node 22.6+, without any package at all:
-
-```sh
-node --experimental-strip-types analyze.ts --days 14
+npx ai-usage-audit --days 14
 ```
 
 Machine-readable output for later reuse:
 
 ```sh
-npx tsx analyze.ts --json > report.json
+npx ai-usage-audit --json > report.json
 ```
 
 With `--json`, stdout contains only valid JSON; warnings and notes go to stderr.
+
+**Running from source** (contributors): clone the repo and run `npx tsx analyze.ts`, or on Node 22.6+ `node --experimental-strip-types analyze.ts`. The published package ships `dist/analyze.mjs` compiled from `analyze.ts` via `npm run build` (esbuild).
 
 | Flag | Default | Meaning |
 |------|---------|---------|
