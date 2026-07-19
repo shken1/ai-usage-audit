@@ -1,6 +1,6 @@
 {
   "name": "ai-usage-audit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Read-only CLI that analyzes your local Claude Code transcripts and shows where your tokens go. No network, no dependencies.",
   "type": "module",
   "bin": {

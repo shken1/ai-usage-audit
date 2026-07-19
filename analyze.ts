@@ -10,7 +10,7 @@
  * messages go to stderr.
  */
 
-const VERSION = '0.1.1';
+const VERSION = '0.1.2';
 
 import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs';
 import { createInterface } from 'node:readline';
@@ -21,6 +21,8 @@ import { homedir } from 'node:os';
 
 const argv = process.argv.slice(2);
 const jsonMode = argv.includes('--json');
+// Redact session identity (names, ids, prompt previews) but keep every metric.
+const anonymize = argv.includes('--anonymize');
 let days = 14;
 const daysIdx = argv.indexOf('--days');
 if (daysIdx !== -1) {
@@ -302,11 +304,31 @@ async function main(): Promise<void> {
   if (malformedLines > 0)
     warnings.push(`${malformedLines} malformed line(s) skipped.`);
 
+  // Closing note printed after all stats. In --json mode it goes to stderr so
+  // stdout stays pure JSON; skipped entirely when there is nothing to report.
+  const biggestSession = topSessions.length > 0 ? totalOf(topSessions[0]) : 0;
+  const scary = biggestSession > 0
+    ? `Your biggest session burned ${biggestSession.toLocaleString('en-US')} tokens.`
+    : `You burned ${grandTotal.toLocaleString('en-US')} tokens in the last ${days} days.`;
+  const footer = grandTotal === 0 ? null : [
+    '─'.repeat(64),
+    'This tool shows you WHERE your tokens go.',
+    "It doesn't tell you WHAT to change.",
+    '',
+    scary,
+    'Want to know which of those were avoidable, and the 3 specific',
+    'changes that would cut your next bill? I read your logs by hand',
+    'and send a written report in 48h.',
+    '',
+    'Full audit → https://ai-usage-audit-xi.vercel.app',
+  ].join('\n');
+
   if (jsonMode) {
     // stdout carries only the JSON document; human-readable notes go to stderr.
     for (const w of warnings) console.error('⚠ ' + w);
     console.log(JSON.stringify({
       version: VERSION,
+      anonymized: anonymize,
       generatedAt: new Date(now).toISOString(),
       windowDays: days,
       files: { scanned: filesScanned, skippedOlderThanWindow: filesSkippedOld },
@@ -321,16 +343,19 @@ async function main(): Promise<void> {
         topModelShare,
       },
       byModel: models.map(([model, t]) => ({ model, ...t, total: totalOf(t) })),
-      topSessions: topSessions.map(s => ({
-        project: s.project,
-        session: s.session,
-        firstUserMsg: s.firstUserMsg,
+      // Anonymized entries carry only a rank label and metrics — no project
+      // name, session id, or prompt text.
+      topSessions: topSessions.map((s, i) => ({
+        ...(anonymize
+          ? { label: `session-${i + 1}` }
+          : { project: s.project, session: s.session, firstUserMsg: s.firstUserMsg }),
         messages: s.messages,
         total: totalOf(s),
         input: s.input, output: s.output, cacheRead: s.cacheRead, cacheCreate: s.cacheCreate,
       })),
       warnings,
     }, null, 2));
+    if (footer) console.error('\n' + footer + '\n');
     return;
   }
 
@@ -372,8 +397,16 @@ async function main(): Promise<void> {
   }
 
   console.log('\nTOP 5 SESSIONS BY TOTAL TOKENS');
-  for (const s of topSessions) {
-    console.log(`  ${fmt(totalOf(s)).padStart(15)}   ${projectLabel(s.project).padEnd(34)} ${s.firstUserMsg}`);
+  topSessions.forEach((s, i) => {
+    const name = anonymize ? `session-${i + 1}` : projectLabel(s.project);
+    const preview = anonymize ? '[redacted]' : s.firstUserMsg;
+    console.log(`  ${fmt(totalOf(s)).padStart(15)}   ${name.padEnd(34)} ${preview}`);
+  });
+  if (!anonymize && topSessions.length > 0) {
+    console.log('');
+    console.log('  ⚠️  Session names and prompt previews above may contain private info');
+    console.log('      (client names, project details). Going to share this output for an audit?');
+    console.log('      Re-run with --anonymize to redact names and prompts, keeping only the numbers.');
   }
 
   console.log('\nRATIOS');
@@ -390,6 +423,7 @@ async function main(): Promise<void> {
     console.log('\nWARNINGS');
     for (const w of warnings) console.log('  ⚠ ' + w);
   }
+  if (footer) console.log('\n' + footer);
   console.log();
 }
 

@@ -31,6 +31,7 @@ With `--json`, stdout contains only valid JSON; warnings and notes go to stderr.
 |------|---------|---------|
 | `--days N` | 14 | Aggregation window in days |
 | `--json` | off | Dump aggregated data as JSON to stdout |
+| `--anonymize` | off | Redact session names, ids, and prompt previews (`session-1`, `session-2`, … ranked by tokens); all metrics kept |
 
 ## Example output
 
@@ -70,7 +71,7 @@ RATIOS
 Yes. It only *reads* JSONL files under `~/.claude/projects/`, makes no network calls, and has no dependencies. The entire tool is one TypeScript file you can audit yourself. If a transcript line is malformed or missing fields, it's skipped and counted, never guessed at.
 
 **What data ends up in the JSON report?**
-Aggregate token counts, model names, per-session totals, warnings, and for each top session: the project folder name, session id, and the first user message truncated to 60 characters. Folder names and message previews can reveal what you're working on — skim `report.json` before sharing it publicly.
+Aggregate token counts, model names, per-session totals, warnings, and for each top session: the project folder name, session id, and the first user message truncated to 60 characters. Folder names and message previews can reveal what you're working on — skim `report.json` before sharing it publicly, or run with `--anonymize` to strip all names and prompt text, keeping only the metrics.
 
 **Why are my totals dominated by cache reads?**
 That's normal for Claude Code: every agentic turn re-reads the cached conversation prefix. A high cache hit ratio is good — a *low* one means you're paying for uncached input that caching could absorb.
@@ -80,7 +81,7 @@ Not yet — tokens only. Prices change too often to hardcode; a user-editable pr
 
 ## Want me to read it for you?
 
-Generate your report with `--json` and get a plain-English breakdown of where your tokens go — and what to change — at [SITE_URL](SITE_URL).
+Generate your report with `--json` and get a plain-English breakdown of where your tokens go — and what to change — at [ai-usage-audit-xi.vercel.app](https://ai-usage-audit-xi.vercel.app).
 
 ## License
 
